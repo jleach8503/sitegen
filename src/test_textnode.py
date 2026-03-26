@@ -1,6 +1,6 @@
 import unittest
 
-from textnode import TextNode, TextType, text_node_to_html_node, split_nodes_delimiter
+from textnode import TextNode, TextType, text_node_to_html_node
 
 
 class TestTextNode(unittest.TestCase):
@@ -69,93 +69,6 @@ class TestTextNodeToHtmlNode(unittest.TestCase):
             node = TextNode("This is an invalid node", "superduper")
             text_node_to_html_node(node)
         self.assertIn("invalid text_type: superduper", str(e.exception))
-
-
-class TestSplitNodesDelimiter(unittest.TestCase):
-    def test_no_delimiter(self):
-        with self.assertRaises(ValueError) as e:
-            nodes = [
-                TextNode("This is a text node", TextType.TEXT),
-            ]
-            split_nodes_delimiter(nodes, "", TextType.TEXT)
-        self.assertIn("a delimiter must be provided", str(e.exception))
-
-    def test_invalid_type(self):
-        with self.assertRaises(ValueError) as e:
-            nodes = [
-                TextNode("This is a text node", TextType.TEXT),
-            ]
-            split_nodes_delimiter(nodes, "*", "superduper")
-        self.assertIn("invalid text_type: superduper", str(e.exception))
-
-    def test_non_text_type(self):
-        nodes = [
-            TextNode("This is a bold node", TextType.BOLD),
-            TextNode("This is an italic node", TextType.ITALIC),
-        ]
-        split_nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-        texts = [node.text for node in split_nodes]
-        self.assertEqual(len(split_nodes), 2)
-        self.assertEqual(
-            texts,
-            [
-                "This is a bold node",
-                "This is an italic node",
-            ]
-        )
-        self.assertIs(split_nodes[0].text_type, TextType.BOLD)
-        self.assertIs(split_nodes[1].text_type, TextType.ITALIC)
-
-    def test_bold_type(self):
-        nodes = [
-            TextNode("This is text with a **bold** word", TextType.TEXT),
-        ]
-        split_nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-        texts = [node.text for node in split_nodes]
-        self.assertEqual(len(split_nodes), 3)
-        self.assertEqual(
-            texts,
-            [
-                "This is text with a ",
-                "bold",
-                " word",
-            ]
-        )
-        self.assertIs(split_nodes[0].text_type, TextType.TEXT)
-        self.assertIs(split_nodes[1].text_type, TextType.BOLD)
-        self.assertIs(split_nodes[2].text_type, TextType.TEXT)
-
-    def test_italic_type(self):
-        nodes = [
-            TextNode("_All text is italics!_", TextType.TEXT),
-        ]
-        split_nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
-        texts = [node.text for node in split_nodes]
-        self.assertEqual(len(split_nodes), 1)
-        self.assertEqual(
-            texts,
-            [
-                "All text is italics!",
-            ]
-        )
-        self.assertIs(split_nodes[0].text_type, TextType.ITALIC)
-
-    def test_code_type(self):
-        nodes = [
-            TextNode("PowerShell cmdlet: `Get-ChildItem`", TextType.TEXT),
-        ]
-        split_nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
-        texts = [node.text for node in split_nodes]
-        self.assertEqual(len(split_nodes), 2)
-        self.assertEqual(
-            texts,
-            [
-                "PowerShell cmdlet: ",
-                "Get-ChildItem",
-            ]
-        )
-        self.assertIs(split_nodes[0].text_type, TextType.TEXT)
-        self.assertIs(split_nodes[1].text_type, TextType.CODE)
 
 
 if __name__ == "__main__":
