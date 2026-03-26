@@ -13,7 +13,7 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
             split_nodes.append(node)
             continue
         
-        split_lines = node.text.split(delimiter, maxsplit=3)
+        split_lines = node.text.split(delimiter)
         if len(split_lines) % 2 != 1:
             raise ValueError(f"invalid markdown - missing closing delimiter: {node.text}")
         for index in range(len(split_lines)):
