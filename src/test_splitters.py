@@ -1,7 +1,7 @@
 import unittest
 
 from textnode import TextNode, TextType
-from splitters import split_nodes_delimiter, split_nodes_image, split_nodes_link
+from splitters import split_nodes_delimiter, split_nodes_image, split_nodes_link, text_to_textnodes
 
 
 class TestSplitNodesDelimiter(unittest.TestCase):
@@ -26,69 +26,98 @@ class TestSplitNodesDelimiter(unittest.TestCase):
             TextNode("This is a bold node", TextType.BOLD),
             TextNode("This is an italic node", TextType.ITALIC),
         ]
-        split_nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-        texts = [node.text for node in split_nodes]
-        self.assertEqual(len(split_nodes), 2)
-        self.assertEqual(
-            texts,
+        new_nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+        self.assertListEqual(
+            new_nodes,
             [
-                "This is a bold node",
-                "This is an italic node",
+                TextNode("This is a bold node", TextType.BOLD),
+                TextNode("This is an italic node", TextType.ITALIC),
             ]
         )
-        self.assertIs(split_nodes[0].text_type, TextType.BOLD)
-        self.assertIs(split_nodes[1].text_type, TextType.ITALIC)
 
     def test_bold_type(self):
         nodes = [
             TextNode("This is text with a **bold** word", TextType.TEXT),
         ]
-        split_nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-        texts = [node.text for node in split_nodes]
-        self.assertEqual(len(split_nodes), 3)
-        self.assertEqual(
-            texts,
+        new_nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+        self.assertListEqual(
+            new_nodes,
             [
-                "This is text with a ",
-                "bold",
-                " word",
+                TextNode("This is text with a ", TextType.TEXT),
+                TextNode("bold", TextType.BOLD),
+                TextNode(" word", TextType.TEXT),
             ]
         )
-        self.assertIs(split_nodes[0].text_type, TextType.TEXT)
-        self.assertIs(split_nodes[1].text_type, TextType.BOLD)
-        self.assertIs(split_nodes[2].text_type, TextType.TEXT)
+
+    def test_bold_type_complex(self):
+        text = "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        nodes = [
+            TextNode(text, TextType.TEXT)
+        ]
+        new_nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+        self.assertListEqual(
+            new_nodes,
+            [
+                TextNode("This is ", TextType.TEXT),
+                TextNode("text", TextType.BOLD),
+                TextNode(" with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)", TextType.TEXT),
+            ]
+        )
 
     def test_italic_type(self):
         nodes = [
             TextNode("_All text is italics!_", TextType.TEXT),
         ]
-        split_nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
-        texts = [node.text for node in split_nodes]
-        self.assertEqual(len(split_nodes), 1)
-        self.assertEqual(
-            texts,
+        new_nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+        self.assertListEqual(
+            new_nodes,
             [
-                "All text is italics!",
+                TextNode("All text is italics!", TextType.ITALIC),
             ]
         )
-        self.assertIs(split_nodes[0].text_type, TextType.ITALIC)
+
+    def test_italic_type_complex(self):
+        text = "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        nodes = [
+            TextNode(text, TextType.TEXT)
+        ]
+        new_nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+        self.assertListEqual(
+            new_nodes,
+            [
+                TextNode("This is **text** with an ", TextType.TEXT),
+                TextNode("italic", TextType.ITALIC),
+                TextNode(" word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)", TextType.TEXT),
+            ]
+        )
 
     def test_code_type(self):
         nodes = [
             TextNode("PowerShell cmdlet: `Get-ChildItem`", TextType.TEXT),
         ]
-        split_nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
-        texts = [node.text for node in split_nodes]
-        self.assertEqual(len(split_nodes), 2)
-        self.assertEqual(
-            texts,
+        new_nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+        self.assertListEqual(
+            new_nodes,
             [
-                "PowerShell cmdlet: ",
-                "Get-ChildItem",
+                TextNode("PowerShell cmdlet: ", TextType.TEXT),
+                TextNode("Get-ChildItem", TextType.CODE),
             ]
         )
-        self.assertIs(split_nodes[0].text_type, TextType.TEXT)
-        self.assertIs(split_nodes[1].text_type, TextType.CODE)
+
+    def test_code_type_complex(self):
+        text = "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        nodes = [
+            TextNode(text, TextType.TEXT)
+        ]
+        new_nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+        self.assertListEqual(
+            new_nodes,
+            [
+                TextNode("This is **text** with an _italic_ word and a ", TextType.TEXT),
+                TextNode("code block", TextType.CODE),
+                TextNode(" and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)", TextType.TEXT),
+            ]
+        )
 
 
 class TestSplitNodesImages(unittest.TestCase):
@@ -222,6 +251,46 @@ class TestSplitNodesLinks(unittest.TestCase):
                 TextNode(" is so broken!", TextType.TEXT),
             ],
             new_nodes,
+        )
+
+
+class TestTextToTextNodes(unittest.TestCase):
+    def test_text_to_textnode(self):
+        text = "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        new_nodes = text_to_textnodes(text)
+        self.assertListEqual(
+            new_nodes,
+            [
+                TextNode("This is ", TextType.TEXT),
+                TextNode("text", TextType.BOLD),
+                TextNode(" with an ", TextType.TEXT),
+                TextNode("italic", TextType.ITALIC),
+                TextNode(" word and a ", TextType.TEXT),
+                TextNode("code block", TextType.CODE),
+                TextNode(" and an ", TextType.TEXT),
+                TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+                TextNode(" and a ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://boot.dev"),
+            ]
+        )
+
+    def test_text_to_textnode(self):
+        text = "This has **multiple** links [to youtube](https://www.youtube.com/@bootdotdev) with an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and another [link](https://boot.dev). _Hope this works!_"
+        new_nodes = text_to_textnodes(text)
+        self.assertListEqual(
+            new_nodes,
+            [
+                TextNode("This has ", TextType.TEXT),
+                TextNode("multiple", TextType.BOLD),
+                TextNode(" links ", TextType.TEXT),
+                TextNode("to youtube", TextType.LINK, "https://www.youtube.com/@bootdotdev"),
+                TextNode(" with an ", TextType.TEXT),
+                TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://boot.dev"),
+                TextNode(". ", TextType.TEXT),
+                TextNode("Hope this works!", TextType.ITALIC),
+            ]
         )
 
 
