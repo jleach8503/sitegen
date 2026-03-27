@@ -1,5 +1,7 @@
 import re
 from enum import Enum
+from textnode import text_node_to_html_node
+from inline_markdown import text_to_textnodes
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
@@ -34,3 +36,12 @@ def block_to_block_type(block):
         return BlockType.ORDERED_LIST
     
     return BlockType.PARAGRAPH
+
+
+def text_to_children(text):
+    children = []
+
+    for node in text_to_textnodes(text):
+        children.append(text_node_to_html_node(node))
+
+    return children
