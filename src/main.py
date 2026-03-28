@@ -41,15 +41,30 @@ def generate_page(from_path, template_path, dest_path):
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     with open(dest_path, "w") as f:
         f.write(content)
+
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    for name in os.listdir(dir_path_content):
+        source_path = os.path.join(dir_path_content, name)
+        target_path = os.path.join(dest_dir_path, name)
+
+        if os.path.isfile(source_path) and os.path.splitext(source_path)[1] == ".md":
+            target_path = os.path.splitext(target_path)[0] + ".html"
+            generate_page(source_path, template_path, target_path)
+            continue
+
+        if os.path.isdir(source_path):            
+            generate_pages_recursive(source_path, template_path, target_path)
+            continue
     
 
 
 def main():
     copy_asset(STATIC_DIR, PUBLIC_DIR, True)
-    generate_page(
-        os.path.join(CONTENT_DIR, "index.md"),
+    generate_pages_recursive(
+        CONTENT_DIR,
         os.path.join(BASE_DIR, "template.html"),
-        os.path.join(PUBLIC_DIR, "index.html")
+        PUBLIC_DIR,
     )
 
 
