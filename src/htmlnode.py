@@ -15,7 +15,7 @@ class HTMLNode:
         html = []
         for key in self.props:
             html.append(f'{key}="{self.props[key]}"')
-        return " ".join(html)
+        return " " + " ".join(html)
 
     def __eq__(self, other):
         if not isinstance(other, HTMLNode):
@@ -36,11 +36,14 @@ class LeafNode(HTMLNode):
         super().__init__(tag, value, None, props)
 
     def to_html(self):
+        if self.tag in ["img", "br", "hr"]:
+            return f"<{self.tag}{self.props_to_html()}>"
         if self.value is None:
             raise ValueError("leaf node must have a value")
         if self.tag is None:
             return self.value
-        return f"<{self.tag}>{self.value}</{self.tag}>"
+            
+        return f"<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>"
     
     def __repr__(self):
         return f"LeafNode({self.tag}, {self.value}, {self.props_to_html()})"

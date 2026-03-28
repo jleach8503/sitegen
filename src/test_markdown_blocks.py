@@ -12,6 +12,7 @@ from markdown_blocks import (
     quote_block_to_html_node,
     list_block_to_html_node,
     markdown_to_html_node,
+    extract_title,
 )
 
 class TestIsOrderedListBlock(unittest.TestCase):
@@ -362,9 +363,7 @@ class TestQuoteBlockToHtmlNode(unittest.TestCase):
         self.assertEqual(
             node.children,
             [
-                ParentNode("p", [
-                    LeafNode(None, "This is a quote")
-                ])
+                LeafNode(None, "This is a quote"),
             ]
         )
 
@@ -376,9 +375,7 @@ class TestQuoteBlockToHtmlNode(unittest.TestCase):
         self.assertEqual(
             node.children,
             [
-                ParentNode("p", [
-                    LeafNode(None, "This is line one This is line two")
-                ])
+                LeafNode(None, "This is line one This is line two"),
             ]
         )
 
@@ -390,12 +387,10 @@ class TestQuoteBlockToHtmlNode(unittest.TestCase):
         self.assertEqual(
             node.children,
             [
-                ParentNode("p", [
-                    LeafNode(None, "This is "),
-                    LeafNode("b", "bold"),
-                    LeafNode(None, " and "),
-                    LeafNode("i", "italic"),
-                ])
+                LeafNode(None, "This is "),
+                LeafNode("b", "bold"),
+                LeafNode(None, " and "),
+                LeafNode("i", "italic"),
             ]
         )
 
@@ -407,12 +402,10 @@ class TestQuoteBlockToHtmlNode(unittest.TestCase):
         self.assertEqual(
             node.children,
             [
-                ParentNode("p", [
-                    LeafNode(None, "Use "),
-                    LeafNode("code", "code"),
-                    LeafNode(None, " and visit "),
-                    LeafNode("a", "here", {"href": "https://example.com"}),
-                ])
+                LeafNode(None, "Use "),
+                LeafNode("code", "code"),
+                LeafNode(None, " and visit "),
+                LeafNode("a", "here", {"href": "https://example.com"}),
             ]
         )
 
@@ -475,7 +468,7 @@ class TestCodeBlockToHtmlNode(unittest.TestCase):
         )
 
 
-class TestCodeBlockToHtmlNode(unittest.TestCase):
+class TestMarkdownToHtmlNode(unittest.TestCase):
     def test_paragraphs(self):
         md = """
 This is **bolded** paragraph
@@ -543,7 +536,7 @@ This is a paragraph.
             html,
             "<div>"
             "<h2>Subheading</h2>"
-            "<blockquote><p>quoted text</p></blockquote>"
+            "<blockquote>quoted text</blockquote>"
             "</div>",
         )
 
@@ -561,3 +554,24 @@ Second paragraph here.
             "<p>Second paragraph here.</p>"
             "</div>",
         )
+
+
+class TestExtractTitle(unittest.TestCase):
+    def test_simple_title(self):
+        md = "# Hello"
+        self.assertEqual(extract_title(md), "Hello")
+
+    def test_title_with_whitespace(self):
+        md = "#   My Great Title   "
+        self.assertEqual(extract_title(md), "My Great Title")
+
+    def test_multiline_markdown(self):
+        md = """# Blog Post Title
+Some content here.
+More content here."""
+        self.assertEqual(extract_title(md), "Blog Post Title")
+
+    def test_missing_title_raises(self):
+        md = "No title here at all"
+        with self.assertRaises(ValueError):
+            extract_title(md)

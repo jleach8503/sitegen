@@ -9,7 +9,7 @@ class TestHTMLNode(unittest.TestCase):
             "href": "https://www.google.com",
             "target": "_blank",
         }
-        expected = 'href="https://www.google.com" target="_blank"'
+        expected = ' href="https://www.google.com" target="_blank"'
         node = HTMLNode(props=props)
         self.assertEqual(node.props_to_html(), expected)
 
@@ -20,7 +20,7 @@ class TestHTMLNode(unittest.TestCase):
         }
         children = [HTMLNode("p", "Some paragraph")]
         node = HTMLNode("a", "somevalue", children, props)
-        expected = 'HTMLNode(a, somevalue, [HTMLNode(p, Some paragraph, None, )], href="https://www.google.com" target="_blank")'
+        expected = 'HTMLNode(a, somevalue, [HTMLNode(p, Some paragraph, None, )],  href="https://www.google.com" target="_blank")'
         self.assertEqual(str(node), expected)
 
     def test_props_to_html_empty(self):
@@ -51,7 +51,7 @@ class TestLeafNode(unittest.TestCase):
             "target": "_blank",
         }
         node = LeafNode("a", "somevalue", props)
-        expected = 'LeafNode(a, somevalue, href="https://www.google.com" target="_blank")'
+        expected = 'LeafNode(a, somevalue,  href="https://www.google.com" target="_blank")'
         self.assertEqual(str(node), expected)
 
     def test_empty_leaf_value(self):
@@ -59,6 +59,30 @@ class TestLeafNode(unittest.TestCase):
             node = LeafNode("a", None)
             node.to_html()
         self.assertIn("leaf node must have a value", str(e.exception))
+
+    def test_img_renders_with_src_and_alt(self):
+        node = LeafNode("img", None, {"src": "https://example.com/pic.png", "alt": "example"})
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            '<img src="https://example.com/pic.png" alt="example">'
+        )
+
+    def test_img_has_leading_space_before_first_attribute(self):
+        node = LeafNode("img", None, {"src": "a.png"})
+        html = node.to_html()
+        self.assertTrue(html.startswith('<img '))
+    
+    def test_img_does_not_have_closing_tag(self):
+        node = LeafNode("img", None, {"src": "a.png"})
+        html = node.to_html()
+        self.assertNotIn("</img>", html)
+
+    def test_img_with_multiple_props_order_consistent(self):
+        node = LeafNode("img", None, {"src": "a.png", "alt": "A"})
+        html = node.to_html()
+        self.assertIn('src="a.png"', html)
+        self.assertIn('alt="A"', html)
 
 class TestParentNode(unittest.TestCase):
     def test_to_html_with_children(self):

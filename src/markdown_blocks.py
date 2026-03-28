@@ -76,7 +76,6 @@ def code_block_to_html_node(block):
 
 def quote_block_to_html_node(block):
     tag = "blockquote"
-    children = []
 
     lines = []
     for line in block.splitlines():
@@ -84,7 +83,7 @@ def quote_block_to_html_node(block):
         lines.append(text)
 
     combined_lines = " ".join(lines)
-    children.append(ParentNode("p", text_to_children(combined_lines)))
+    children = text_to_children(combined_lines)
 
     return ParentNode(tag, children)
 
@@ -122,3 +121,10 @@ def markdown_to_html_node(markdown):
         children.append(child)
 
     return ParentNode("div", children)
+
+
+def extract_title(markdown):
+    header = markdown.splitlines()[0]
+    if not header.startswith("# "):
+        raise ValueError("markdown must contain title header")
+    return header[2:].strip()
