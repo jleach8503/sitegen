@@ -70,7 +70,7 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, bas
 
 
 def main():
-    basepath = sys.argv[0] if len(sys.argv[0]) > 1 else "/"    
+    basepath = sys.argv[1] if len(sys.argv[1]) > 1 else "/"    
 
     copy_asset(STATIC_DIR, OUTPUT_DIR, True)
     generate_pages_recursive(
